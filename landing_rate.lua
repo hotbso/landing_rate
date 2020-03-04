@@ -47,7 +47,7 @@ local td_phase = false -- touchdown phase
 local alpha = 0.9
 local vs_sm = 0.0
 
-local rw, rw_dist
+local rw, rw_dist, thr_dist, thr_ra
 
 local function get_a3xx_rating(vs)
     for i, r in ipairs(a3xx_ratings) do
@@ -62,7 +62,7 @@ local function logvs()
 
     local g = ipc.readSW(0x11B8) / 624.0
     local ias = ipc.readSD(0x02B8) / 128
-    
+
     if vs_td > 25 then
         local line = string.format("vs : %0.0f fpm\nIAS: %0.1f kn", vs_sm, ias)
 
@@ -70,7 +70,7 @@ local function logvs()
             local rating = get_a3xx_rating(vs_td)
             line = line .. "\n" .. rating
         end
-        
+
         ipc.display(line, 30)
     end
 end
@@ -93,6 +93,9 @@ local function loop()
                 local crl_x, crl_y = rwdb.mk_ctrl_uvec(rw)
                 local d_crl = td_x * crl_y - td_y * crl_x
                 ipc.log(string.format("lat: %0.5f, lon: %0.5f, dist: %0.0f ofs: %0.0f", lat, lon, td_dist, d_crl))
+                if thr_ra ~= nil then
+                    ipc.log(string.format("height above thr: %0.1f", thr_ra))
+                end
             end
             logvs()
             was_airborne = false
@@ -104,20 +107,34 @@ local function loop()
 
     local ra = ipc.readSD(0x31E4) / 65636.0 -- radar altitude m
 
-    if ra > 20 and not was_airborne then
+    if ra > 20 and not was_airborne then    -- transition to airborne
         was_airborne = true
         td_phase = false
         rw = nil
         rw_dist = 1.0E20
+        thr_dist = 1.0E20
+        thr_ra = nil
     end
-    
-    if ra > 500 then
-        ipc.sleep(5000)
+
+    if ra >= 500 then
+        ipc.sleep(5000) -- dormant
+        return
+    end
+
+    if ra > 150 then
+        if rw ~= nil then   -- zap takeoff rwy
+            rw = nil
+            rw_dist = 1.0E20
+            thr_dist = 1.0E20
+            thr_ra = nil
+        end
+        
+        ipc.sleep(1000) -- start getting nervous
         return
     end
 
     -- select runway
-    if 150 > ra and ra > 40 then
+    if ra >= 40 then
         local lat, lon = get_pos()
         local r, d = rwdb.nearest_rw(lat, lon)
 
@@ -125,9 +142,21 @@ local function loop()
             rw = r
             rw_dist = d
         end
-   end
 
-    
+        ipc.sleep(250)
+        return
+    end
+
+    -- track crossing of threshold
+    if rw ~= nil then
+        local lat, lon = get_pos()
+        local d = rwdb.thr_distance(rw, lat, lon)
+        if d < thr_dist then
+            thr_dist = d
+            thr_ra = ra
+        end
+    end
+
     if ra > 15 then
         ipc.sleep(250)
         return
