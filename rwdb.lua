@@ -65,51 +65,53 @@ local function build_cache()
             local line
             for line in f:lines() do
                 -- ipc.log(line)
-                local i = 1
+                if line:sub(1, 1) ~= '#' then
+                    local i = 1
 
-                local rw = {}
-                for word in string.gmatch(line, '[^,]+') do
-                    if (rw_lat_ <= i and i <= rw_hdg_) or (rw_mag_var_ <= i and i <= rw_thresh_ofs_) then
-                        rw[i] = tonumber(word)
-                    else
-                        rw[i] = word
-                    end
-                    i = i + 1
-                end
-
-                if rw[14] ~= "CL" then  -- landing must be allowed
-                    -- pretty format runway designator
-                    local d = rw[rw_designator_]
-                    local num = d:sub(2,3)
-                    local c = tonumber(d:sub(4,4))
-                    rw[rw_designator_] = num .. ({'', 'L', 'R', 'C'})[c+1]
-
-                    local lat = rw[rw_lat_]
-                    local lon = rw[rw_lon_]
-                    local disp = rw[rw_thresh_ofs_]
-
-                    -- set threshold to displaced threshold
-                    if disp > 0 then
-                        disp = disp * 0.3048 -- m
-                        local dir = math.rad(rw[rw_hdg_] + rw[rw_mag_var_])  -- true
-                        lat = lat + disp * math.cos(dir) / QC
-                        lon = lon + disp * math.sin(dir) / (math.cos(math.rad(lat)) * QC)
-                        rw[rw_lat_] = lat
-                        rw[rw_lon_] = lon
+                    local rw = {}
+                    for word in string.gmatch(line, '[^,]+') do
+                        if (rw_lat_ <= i and i <= rw_hdg_) or (rw_mag_var_ <= i and i <= rw_thresh_ofs_) then
+                            rw[i] = tonumber(word)
+                        else
+                            rw[i] = word
+                        end
+                        i = i + 1
                     end
 
-                    local cache_key = mk_cache_key(lat, lon)
-                    local rw_key = rw[rw_icao_] .. "_" .. rw[rw_designator_]
+                    if rw[14] ~= "CL" then  -- landing must be allowed
+                        -- pretty format runway designator
+                        local d = rw[rw_designator_]
+                        local num = d:sub(2,3)
+                        local c = tonumber(d:sub(4,4))
+                        rw[rw_designator_] = num .. ({'', 'L', 'R', 'C'})[c+1]
 
-                    -- ipc.log(string.format("%s %s %f %f %s %s",
-                    --                    rw[rw_icao_], rw[rw_designator_], lat, lon, cache_key, rw_key))
+                        local lat = rw[rw_lat_]
+                        local lon = rw[rw_lon_]
+                        local disp = rw[rw_thresh_ofs_]
 
-                    local rw_list = cache[cache_key]
-                    if rw_list == nil then
-                        rw_list = {}
-                        cache[cache_key] = rw_list
+                        -- set threshold to displaced threshold
+                        if disp > 0 then
+                            disp = disp * 0.3048 -- m
+                            local dir = math.rad(rw[rw_hdg_] + rw[rw_mag_var_])  -- true
+                            lat = lat + disp * math.cos(dir) / QC
+                            lon = lon + disp * math.sin(dir) / (math.cos(math.rad(lat)) * QC)
+                            rw[rw_lat_] = lat
+                            rw[rw_lon_] = lon
+                        end
+
+                        local cache_key = mk_cache_key(lat, lon)
+                        local rw_key = rw[rw_icao_] .. "_" .. rw[rw_designator_]
+
+                        -- ipc.log(string.format("%s %s %f %f %s %s",
+                        --                    rw[rw_icao_], rw[rw_designator_], lat, lon, cache_key, rw_key))
+
+                        local rw_list = cache[cache_key]
+                        if rw_list == nil then
+                            rw_list = {}
+                            cache[cache_key] = rw_list
+                        end
+                        rw_list[rw_key] = rw
                     end
-                    rw_list[rw_key] = rw
                 end
             end
 
