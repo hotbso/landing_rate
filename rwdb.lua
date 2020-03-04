@@ -49,14 +49,9 @@ local function mk_cache_key(lat, lon)
 end
 
 local function build_cache()
-    local r5csv_path = r5csv_path
-    if r5csv_path == nil then
-        r5csv_path = ""
-    end
-
     cache = {}
 
-    for _, fn in ipairs({r5csv_path .. "r5.csv", r5csv_path .. "r5_patch.csv"}) do
+    for _, fn in ipairs({"..\\r5.csv", "r5_patch.csv"}) do
         f = io.open(fn, "r")
 
         if f ~= nil then

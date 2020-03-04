@@ -29,8 +29,6 @@ function ipc.log(line)
     print(line)
 end
 
-r5csv_path = "..\\"
-
 rwdb = require("rwdb")
 
 -- rwdb.dump_cache()

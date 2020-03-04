@@ -176,7 +176,6 @@ local function loop()
 end
 
 ipc.log("landing_rate startup")
-r5csv_path = "..\\"
 rwdb = require("rwdb")
 
 _, _, acf_model = string.find(ipc.readSTR(0x3500, 24), "([%a%d]+)")
