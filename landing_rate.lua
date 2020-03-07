@@ -26,7 +26,6 @@
 
 local M_2_FT = 3.2808
 
-
 -- Source of data (among others)
 -- https://www.pprune.org/tech-log/510634-definition-hard-landing-maintenance.html
 
@@ -50,8 +49,10 @@ local vs_sm = 0.0
 local rw, rw_dist, thr_dist, thr_ra
 
 local function get_pos()
-    local lat = ipc.readDBL(0x6010)
-    local lon = ipc.readDBL(0x6018)
+    -- local lat = ipc.readDBL(0x6010)
+    -- local lon = ipc.readDBL(0x6018)
+    local lat = ipc.readDD(0x560) * 90.0 / (10001750.0 * 65536.0 * 65536.0)
+    local lon = ipc.readDD(0x568) * 360.0 / (65536.0 * 65536.0 * 65536.0 * 65536.0)
     return lat, lon
 end
 
@@ -80,18 +81,24 @@ local function display_data()
         ipc.log(string.format("nearest rw %s %s", rw[rw_icao_], rw[rw_designator_]))
         local lat, lon = get_pos()
         local td_x, td_y = rwdb.mk_thr_vec(rw, lat, lon)
-        local td_dist = rwdb.vec_length(td_x, td_y)
-        local crl_x, crl_y = rwdb.mk_ctrl_uvec(rw)
-        local d_crl = td_x * crl_y - td_y * crl_x
+        local td_dist = rwdb.vec_length(td_x, td_y)         -- dist from threshold
+        local crl_x, crl_y = rwdb.mk_ctrl_uvec(rw)          -- centerline unit vector
+        local d_crl = td_x * crl_y - td_y * crl_x           -- ofs from centerline
+
+        local true_hdg = ipc.readUD(0x580) * 360/(65536*65536)
+        local true_rw = rw[rw_hdg_] + rw[rw_mag_var_]
+        local crab = true_hdg - true_rw
+
         ipc.log(string.format("lat: %0.5f, lon: %0.5f, dist: %0.0f ofs: %0.0f", lat, lon, td_dist, d_crl))
         ipc.log(string.format("height above thr: %0.1f", thr_ra))
         line = line ..
-            string.format("\nThreshold %s/%s\nAbove: %.f ft / %.f m, Distance: %.f ft / %.f m, from CL: %.f ft / %.f m",
-                       rw[rw_icao_], rw[rw_designator_], thr_ra * M_2_FT, thr_ra, td_dist * M_2_FT, td_dist,
-                       d_crl * M_2_FT, d_crl)
+            string.format("\nThreshold %s/%s\nAbove: %.f ft / %.f m, Distance: %.f ft / %.f m\n" ..
+                          "from CL: %.f ft / %.f m / %.1f°",
+                           rw[rw_icao_], rw[rw_designator_], thr_ra * M_2_FT, thr_ra, td_dist * M_2_FT, td_dist,
+                           d_crl * M_2_FT, d_crl, crab)
     end
 
-    ipc.setdisplay(30, 600, 800,  200)
+    ipc.setdisplay(30, 600, 600,  200)
     ipc.display(line, 30)
 end
 
