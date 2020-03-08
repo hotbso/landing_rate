@@ -49,10 +49,8 @@ local vs_sm = 0.0
 local rw, rw_dist, thr_dist, thr_ra
 
 local function get_pos()
-    -- local lat = ipc.readDBL(0x6010)
-    -- local lon = ipc.readDBL(0x6018)
-    local lat = ipc.readDD(0x560) * 90.0 / (10001750.0 * 65536.0 * 65536.0)
-    local lon = ipc.readDD(0x568) * 360.0 / (65536.0 * 65536.0 * 65536.0 * 65536.0)
+    local lat = ipc.readDD(0x560) * 90.0 / (10001750.0 * 2^32)
+    local lon = ipc.readDD(0x568) * 360.0 / 2^64
     return lat, lon
 end
 
@@ -85,7 +83,7 @@ local function display_data()
         local crl_x, crl_y = rwdb.mk_ctrl_uvec(rw)          -- centerline unit vector
         local d_crl = td_x * crl_y - td_y * crl_x           -- ofs from centerline
 
-        local true_hdg = ipc.readUD(0x580) * 360/(65536*65536)
+        local true_hdg = ipc.readUD(0x580) * 360 / 2^32
         local true_rw = rw[rw_hdg_] + rw[rw_mag_var_]
         local crab = true_hdg - true_rw
 
