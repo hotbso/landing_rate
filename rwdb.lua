@@ -37,11 +37,12 @@ rw_lat_ctr_ = 11  -- center of rw
 rw_lon_ctr_ = 12
 rw_thresh_ofs_ = 13
 
-local R = 6378137.0 -- Radius of earth in m
+local R = 6371001.0 -- IUGG average radius of earth in m
 local QC = R * math.pi * 0.5 -- quarter circle ~ 90°
 
 local cache = nil
 
+-- cache by lower left corner of 1x1 deg tile
 local function mk_cache_key(lat, lon)
     local lat_e = math.floor(lat)
     local lon_e = math.floor(lon)
