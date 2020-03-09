@@ -38,7 +38,7 @@ rw_lon_ctr_ = 12
 rw_thresh_ofs_ = 13
 
 local R = 6371001.0 -- IUGG average radius of earth in m
-local QC = R * math.pi * 0.5 -- quarter circle ~ 90°
+local d_1deg = R * math.pi / 180 -- distance 1 deg in m, ~ 60 sm
 
 local cache = nil
 
@@ -89,8 +89,8 @@ local function build_cache()
                         if disp > 0 then
                             disp = disp * 0.3048 -- m
                             local dir = math.rad(rw[rw_hdg_] + rw[rw_mag_var_])  -- true
-                            lat = lat + disp * math.cos(dir) / QC
-                            lon = lon + disp * math.sin(dir) / (math.cos(math.rad(lat)) * QC)
+                            lat = lat + disp * math.cos(dir) / d_1deg
+                            lon = lon + disp * math.sin(dir) / math.cos(math.rad(lat)) / d_1deg
                             rw[rw_lat_] = lat
                             rw[rw_lon_] = lon
                         end
@@ -140,7 +140,7 @@ end
 -- euclidian vector (lat1, lon1) - (lat0, lon0) : x to east y to north
 -- small distances only
 function rwdb.mk_vec(lat0, lon0, lat1, lon1)
-    return (lon1 - lon0) * math.cos(math.rad((lat0 + lat1)/2)) * QC / 90, (lat1 - lat0) * QC / 90
+    return (lon1 - lon0) * math.cos(math.rad((lat0 + lat1)/2)) * d_1deg, (lat1 - lat0) * d_1deg
 end
 
 
@@ -155,9 +155,8 @@ end
 
 -- center line unit vector
 function rwdb.mk_ctrl_uvec(rw)
-    local x, y = rwdb.mk_vec(rw[rw_lat_], rw[rw_lon_], rw[rw_lat_ctr_], rw[rw_lon_ctr_])
-    local l = rwdb.vec_length(x, y)
-    return x / l, y / l
+    local dir = math.rad(rw[rw_hdg_] + rw[rw_mag_var_])
+    return math.sin(dir), math.cos(dir)
 end
 
 -- https://stackoverflow.com/questions/639695/how-to-convert-latitude-or-longitude-to-meters
