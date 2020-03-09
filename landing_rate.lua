@@ -24,6 +24,8 @@
 
 -- landing_rate.lua
 
+local VERSION = "1.0"
+
 local M_2_FT = 3.2808
 
 -- Source of data (among others)
@@ -182,7 +184,7 @@ local function loop()
     ipc.sleep(30) -- ~ 1 frame
 end
 
-ipc.log("landing_rate startup")
+ipc.log("landing_rate " .. VERSION .. " startup")
 ipc.setdisplay(30, 600, 600,  180)
 rwdb = require("rwdb")
 
