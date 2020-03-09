@@ -87,7 +87,7 @@ local function display_data()
         local true_rw = rw[rw_hdg_] + rw[rw_mag_var_]
         local crab = true_hdg - true_rw
 
-        ipc.log(string.format("lat: %0.5f, lon: %0.5f, dist: %0.0f ofs: %0.0f", lat, lon, td_dist, d_crl))
+        ipc.log(string.format("lat,lon: %0.5f,%0.5f, dist: %0.0f ofs: %0.0f", lat, lon, td_dist, d_crl))
         ipc.log(string.format("height above thr: %0.1f", thr_ra))
         line = line ..
             string.format("\nThreshold %s/%s\nAbove: %.f ft / %.f m, Distance: %.f ft / %.f m\n" ..
