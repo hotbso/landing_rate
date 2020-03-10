@@ -35,8 +35,9 @@ See accompanied r5_patch.csv for more examples.
 
 Installation:
 - obtain MakeRwys tool (http://www.fsuipc.com/), extract into p3d top folder
-- run MakeRwys as administrator (don't forget to redo after scenery instattions)
-- unzip this tool into `Modules` folder
+- run MakeRwys as administrator (don't forget to redo after scenery installations)
+- download latest version of this tool from the relases tab
+- copy `landing_rate.lua`, `rwdb.lua` and copy/merge `r5_patch.csv` into `Modules` folder
 - edit `FSUIPC5.ini` as shown below
 
 ```
