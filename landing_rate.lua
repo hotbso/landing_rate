@@ -24,7 +24,7 @@
 
 -- landing_rate.lua
 
-local VERSION = "1.0"
+local VERSION = "1.1dev"
 
 local M_2_FT = 3.2808
 
@@ -78,8 +78,10 @@ local function display_data()
     end
 
     if rw ~=nil then
-        ipc.log(string.format("nearest rw %s %s", rw[rw_icao_], rw[rw_designator_]))
         local lat, lon = get_pos()
+        ipc.log(string.format("td rw %s %s %f,%f", rw[rw_icao_], rw[rw_designator_], rw[rw_lat_], rw[rw_lon_]))
+        ipc.log(string.format("td lat,lon %f,%f", lat, lon))
+
         local td_x, td_y = rwdb.mk_thr_vec(rw, lat, lon)
         local td_dist = rwdb.vec_length(td_x, td_y)         -- dist from threshold
         local crl_x, crl_y = rwdb.mk_ctrl_uvec(rw)          -- centerline unit vector
