@@ -64,7 +64,7 @@ local function get_a3xx_rating(vs)
 end
 
 local function display_data()
-    local vs_td = -ipc.readSD(0x030C) * 60 * 3.28084 / 256 -- vs at touch down fpm
+    local vs_td = -ipc.readDBL(0x31A0) * 60 -- vertical GS fpm (Y axis) at touch down
     vs_sm = alpha * vs_td + (1.0 - alpha) * vs_sm
 
     -- unreliable local g = ipc.readSW(0x11B8) / 624.0
@@ -177,7 +177,7 @@ local function loop()
     end
 
     -- come here in touchdown phase
-    local vs = -ipc.readSD(0x02C8) * 60 * 3.28084 / 256  -- fpm
+    local vs = -ipc.readDBL(0x31A0) * 60 -- vertical GS fpm (Y axis)
 
     if not td_phase then -- catch the transition to td_phase
         td_phase = true
