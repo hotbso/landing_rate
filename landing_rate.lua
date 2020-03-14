@@ -42,18 +42,19 @@ local a3xx_ratings = {
 local acf_model
 
 local was_airborne = false
-local td_phase = false -- touchdown phase
 
--- we use a mild exponential smoother to unjitter vs
-local alpha = 0.9
-local vs_sm = 0.0
-
-local rw, rw_dist, thr_dist, thr_ra
+local t, vs, rw, rw_dist, thr_dist, thr_crossed, thr_ra
 
 local function get_pos()
     local lat = ipc.readDD(0x560) * 90.0 / (10001750.0 * 2^32)
     local lon = ipc.readDD(0x568) * 360.0 / 2^64
     return lat, lon
+end
+
+-- m/s
+local function get_vs()
+    local vs = ipc.readDBL(0x31A0) -- vertical GS fpm (Y axis)
+    return vs / M_2_FT
 end
 
 local function get_a3xx_rating(vs)
@@ -64,16 +65,17 @@ local function get_a3xx_rating(vs)
 end
 
 local function display_data()
-    local vs_td = -ipc.readDBL(0x31A0) * 60 -- vertical GS fpm (Y axis) at touch down
-    vs_sm = alpha * vs_td + (1.0 - alpha) * vs_sm
+    -- the last recorded vs before touch down is the correct one
+    local td_vs = vs
+    local td_t0 = t
 
-    -- unreliable local g = ipc.readSW(0x11B8) / 624.0
     local ias = ipc.readSD(0x02B8) / 128
 
-    local line = string.format("vs : %0.0f fpm\nIAS: %0.1f kn", vs_sm, ias)
+    local vs_fpm = -td_vs * M_2_FT * 60
+    local line = string.format("vs : %0.0f fpm, IAS: %0.0f kn", vs_fpm, ias)
 
     if acf_model == "A320" or acf_model == "A321" or acf_model == "A319" then
-        local rating = get_a3xx_rating(vs_td)
+        local rating = get_a3xx_rating(vs_fpm)
         line = line .. "\n" .. rating
     end
 
@@ -123,10 +125,10 @@ local function loop()
 
     if ra > 20 and not was_airborne then    -- transition to airborne
         was_airborne = true
-        td_phase = false
         rw = nil
         rw_dist = 1.0E20
         thr_dist = 1.0E20
+        thr_crossed = false
         thr_ra = nil
     end
 
@@ -162,12 +164,15 @@ local function loop()
     end
 
     -- track crossing of threshold
-    if rw ~= nil then
+    if not thr_crossed and rw ~= nil then
         local lat, lon = get_pos()
         local d = rwdb.thr_distance(rw, lat, lon)
+
         if d < thr_dist then
             thr_dist = d
             thr_ra = ra
+        else
+            thr_crossed = true  -- distance is increasing again
         end
     end
 
@@ -177,16 +182,9 @@ local function loop()
     end
 
     -- come here in touchdown phase
-    local vs = -ipc.readDBL(0x31A0) * 60 -- vertical GS fpm (Y axis)
-
-    if not td_phase then -- catch the transition to td_phase
-        td_phase = true
-        vs_sm = vs
-    else
-        vs_sm = alpha * vs + (1.0 - alpha) * vs_sm
-    end
-
-    ipc.sleep(30) -- ~ 1 frame
+    vs =  get_vs()
+    t = ipc.readDBL(0x04A8)   -- sim time
+    ipc.sleep(25)  -- FSUIPC seems to pick up data with 18 Hz
 end
 
 ipc.log("landing_rate " .. VERSION .. " startup")
