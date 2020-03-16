@@ -43,7 +43,7 @@ local acf_model
 
 local was_airborne = false
 
-local t, vs, rw, rw_dist, thr_dist, thr_crossed, thr_ra
+local vs, rw, rw_dist, thr_dist, thr_crossed, thr_ra
 
 local function get_pos()
     local lat = ipc.readDD(0x560) * 90.0 / (10001750.0 * 2^32)
@@ -67,7 +67,6 @@ end
 local function display_data()
     -- the last recorded vs before touch down is the correct one
     local td_vs = vs
-    local td_t0 = t
 
     local ias = ipc.readSD(0x02B8) / 128
 
@@ -183,7 +182,6 @@ local function loop()
 
     -- come here in touchdown phase
     vs =  get_vs()
-    t = ipc.readDBL(0x04A8)   -- sim time
     ipc.sleep(25)  -- FSUIPC seems to pick up data with 18 Hz
 end
 
