@@ -24,7 +24,7 @@
 
 -- landing_rate.lua
 
-local VERSION = "1.1dev"
+local VERSION = "1.1"
 
 local M_2_FT = 3.2808
 
