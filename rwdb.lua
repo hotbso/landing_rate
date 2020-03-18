@@ -169,21 +169,18 @@ local function geo_dist(lat, lon, lat1, lon1)
     local dlon = lon1 - lon
     local a = math.sin(dlat/2) * math.sin(dlat/2) +
         math.cos(lat) * math.cos(lat1) * math.sin(dlon/2) * math.sin(dlon/2)
-    local c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))    
+    local c = 2 * math.atan2(math.sqrt(a), math.sqrt(1-a))
     return R * c
 end
 
--- find nearest runway
-function rwdb.nearest_rw(lat, lon)
-   if cache == nil then
-        return nil, nil
-    end
-
-    local cache_key = mk_cache_key(lat, lon)
+-- find nearest rw in tile for lat_tile, lon_tile closer than min_dist
+local function nearest_rw_tile(lat, lon, lat_tile, lon_tile, min_rw, min_dist)
+    local cache_key = mk_cache_key(lat_tile, lon_tile)
     local rw_list = cache[cache_key]
 
-    local min_dist = 1.0E20
-    local min_rw
+    if rw_list == nil then
+        return nil, min_dist
+    end
 
     local rw_key, rw
     for rw_key, rw in pairs(rw_list) do
@@ -195,6 +192,38 @@ function rwdb.nearest_rw(lat, lon)
             min_dist = dist
             min_rw = rw
         end
+    end
+
+    return min_rw, min_dist
+end
+
+-- find nearest runway
+function rwdb.nearest_rw(lat, lon)
+   if cache == nil then
+        return nil, nil
+    end
+
+    local min_dist = 1.0E20
+    local min_rw
+
+    -- find nearest in plane's own tile
+    min_rw, min_dist = nearest_rw_tile(lat, lon, lat, lon, nil, min_dist)
+
+    -- relative within tile
+    local lon_rel = lon - math.floor(lon)
+    local lat_rel = lat - math.floor(lat)
+
+    -- if close to an edge check neighbor tiles as well
+    if lon_rel < 0.1 then
+        min_rw, min_dist = nearest_rw_tile(lat, lon, lat, lon - 1, min_rw, min_dist)
+    elseif lon_rel > 0.9 then
+        min_rw, min_dist = nearest_rw_tile(lat, lon, lat, lon + 1, min_rw, min_dist)
+    end
+
+    if lat_rel < 0.1 then
+        min_rw, min_dist = nearest_rw_tile(lat, lon, lat - 1, lon, min_rw, min_dist)
+    elseif lat_rel > 0.9 then
+        min_rw, min_dist = nearest_rw_tile(lat, lon, lat + 1, lon, min_rw, min_dist)
     end
 
     return min_rw, min_dist

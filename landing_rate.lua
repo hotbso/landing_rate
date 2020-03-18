@@ -24,7 +24,7 @@
 
 -- landing_rate.lua
 
-local VERSION = "1.1"
+local VERSION = "1.2dev"
 
 local M_2_FT = 3.2808
 
@@ -56,6 +56,7 @@ local function get_vs()
     local vs = ipc.readDBL(0x31A0) -- vertical GS fpm (Y axis)
     return vs / M_2_FT
 end
+
 
 local function get_a3xx_rating(vs)
     for i, r in ipairs(a3xx_ratings) do

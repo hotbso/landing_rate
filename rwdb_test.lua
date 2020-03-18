@@ -47,8 +47,8 @@ print(string.format("%s %s %f %f %f", rw[rw_icao_], rw[rw_designator_], rw_dist,
 td_dist = rwdb.thr_distance(rw, 51.294948, 6.772293)
 print(string.format("touch down distance %f", td_dist))
 
-local lat = 47.78642
-local lon = 13.00819
+local lat = 53.636531
+local lon = 10.000624
 
 rw, rw_dist = rwdb.nearest_rw(lat, lon)
 print(string.format("%s %s %f %f,%f", rw[rw_icao_], rw[rw_designator_], rw_dist, rw[rw_lat_], rw[rw_lon_]))
