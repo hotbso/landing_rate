@@ -44,6 +44,11 @@ local cache = nil
 
 -- cache by lower left corner of 1x1 deg tile
 local function mk_cache_key(lat, lon)
+    -- date line
+    if lon < -180 then
+        lon = lon + 360
+    end
+
     local lat_e = math.floor(lat)
     local lon_e = math.floor(lon)
     return string.format("%+04d_%+04d", lat_e, lon_e)
@@ -213,16 +218,29 @@ function rwdb.nearest_rw(lat, lon)
     local lon_rel = lon - math.floor(lon)
     local lat_rel = lat - math.floor(lat)
 
-    -- if close to an edge check neighbor tiles as well
+    -- if close to an edge, check neighbor tiles as well
     if lon_rel < 0.1 then
         min_rw, min_dist = nearest_rw_tile(lat, lon, lat, lon - 1, min_rw, min_dist)
+
+        if lat_rel < 0.05 then
+            min_rw, min_dist = nearest_rw_tile(lat, lon, lat - 1, lon - 1, min_rw, min_dist)
+        elseif lat_rel > 0.95 then
+            min_rw, min_dist = nearest_rw_tile(lat, lon, lat + 1, lon - 1, min_rw, min_dist)
+        end
+
     elseif lon_rel > 0.9 then
         min_rw, min_dist = nearest_rw_tile(lat, lon, lat, lon + 1, min_rw, min_dist)
+
+        if lat_rel < 0.05 then
+            min_rw, min_dist = nearest_rw_tile(lat, lon, lat - 1, lon + 1, min_rw, min_dist)
+        elseif lat_rel > 0.95 then
+            min_rw, min_dist = nearest_rw_tile(lat, lon, lat + 1, lon + 1, min_rw, min_dist)
+        end
     end
 
-    if lat_rel < 0.1 then
+    if lat_rel < 0.05 then
         min_rw, min_dist = nearest_rw_tile(lat, lon, lat - 1, lon, min_rw, min_dist)
-    elseif lat_rel > 0.9 then
+    elseif lat_rel > 0.95 then
         min_rw, min_dist = nearest_rw_tile(lat, lon, lat + 1, lon, min_rw, min_dist)
     end
 
