@@ -24,6 +24,14 @@
 
 -- landing_rate.lua
 
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ start of customizations ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+local show_time = 40    -- time in seconds to show result window
+
+-- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ end of customizations ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+require("rwdb")
+
 local VERSION = "1.2dev"
 
 local M_2_FT = 3.2808
@@ -101,7 +109,7 @@ local function display_data()
     end
 
     ipc.setdisplay(30, 600, 600,  200)
-    ipc.display(line, 30)
+    ipc.display(line, show_time)
 
     local pline = "\n--------------------------------------------------------------------\n" ..
                   line ..
@@ -188,7 +196,6 @@ end
 
 ipc.log("landing_rate " .. VERSION .. " startup")
 ipc.setdisplay(30, 600, 600,  180)
-rwdb = require("rwdb")
 
 _, _, acf_model = string.find(ipc.readSTR(0x3500, 24), "([%a%d]+)")
 ipc.log("ACF model: '" .. acf_model .. "'")
