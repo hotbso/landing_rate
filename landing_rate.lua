@@ -32,7 +32,7 @@ local show_time = 40    -- time in seconds to show result window
 
 require("rwdb")
 
-local VERSION = "1.2dev"
+local VERSION = "1.2"
 
 local M_2_FT = 3.2808
 
