@@ -54,10 +54,13 @@ local function mk_cache_key(lat, lon)
     return string.format("%+04d_%+04d", lat_e, lon_e)
 end
 
-local function build_cache()
+function rwdb.build_cache(rwdb_files)
+    local t1
+    t1 = os.clock()
+
     cache = {}
 
-    for _, fn in ipairs({"..\\r5.csv", "r5_patch.csv"}) do
+    for _, fn in ipairs(rwdb_files) do
         f = io.open(fn, "r")
 
         if f ~= nil then
@@ -123,6 +126,8 @@ local function build_cache()
     if (next(cache) == nil) then
         cache = nil
     end
+
+    ipc.log(string.format("rwdb: cache built with %0.3fs CPU", os.clock() - t1))
 end
 
 function rwdb.dump_cache()
@@ -251,10 +256,5 @@ end
 function rwdb.thr_distance(rw, lat, lon)
     return geo_dist(lat, lon, rw[rw_lat_], rw[rw_lon_])
 end
-
-local t1
-t1 = os.clock()
-build_cache()
-ipc.log(string.format("rwdb: cache built with %0.3fs CPU", os.clock() - t1))
 
 return rwdb

@@ -32,7 +32,7 @@ local show_time = 40    -- time in seconds to show result window
 
 require("rwdb")
 
-local VERSION = "1.2"
+local VERSION = "1.3"
 
 local M_2_FT = 3.2808
 
@@ -47,7 +47,7 @@ local a3xx_ratings = {
     {100000, "Severe hard landing, damage likely"}
 }
 
-local acf_model
+local acf_model, p3d_directory, script_directory
 
 local was_airborne = false
 
@@ -100,6 +100,13 @@ local function display_data()
         local true_hdg = ipc.readUD(0x580) * 360 / 2^32
         local true_rw = rw[rw_hdg_] + rw[rw_mag_var_]
         local crab = true_hdg - true_rw
+
+        -- normalize, a 36 rwy might give -356°
+        if crab < -180 then
+            crab = crab + 360
+        elseif crab > 180 then
+            crab = crab - 360
+        end
 
         line = line ..
             string.format("\nThreshold %s/%s\nAbove: %.f ft / %.f m, Distance: %.f ft / %.f m\n" ..
@@ -199,6 +206,15 @@ ipc.setdisplay(30, 600, 600,  180)
 
 _, _, acf_model = string.find(ipc.readSTR(0x3500, 24), "([%a%d]+)")
 ipc.log("ACF model: '" .. acf_model .. "'")
+
+_, _, p3d_directory = string.find(ipc.readSTR(0x3E00, 256), "([%a%d%s:\\_%-]+)")
+ipc.log("p3d_directory: '" .. p3d_directory .. "'")
+
+script_directory = debug.getinfo(1, "S").source:sub(2)
+script_directory = script_directory:match("(.*[/\\])")
+ipc.log("script_directory: '" .. script_directory .. "'")
+
+rwdb.build_cache({p3d_directory .. "r5.csv", script_directory .. "r5_patch.csv"})
 
 while true do
     loop()
