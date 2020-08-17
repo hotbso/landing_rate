@@ -27,7 +27,7 @@
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ start of customizations ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 local show_time = 40    -- time in seconds to show result window
-
+local textual_rating = true
 -- ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ end of customizations ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 require("rwdb")
@@ -77,12 +77,14 @@ local function display_data()
     -- the last recorded vs before touch down is the correct one
     local td_vs = vs
 
-    local ias = ipc.readSD(0x02B8) / 128
+    local ias = ipc.readSD(0x02BC) / 128
+    local pitch = ipc.readUD(0x578) * 360 / 2^32
+    if pitch > 180 then pitch = 360 - pitch end -- normalize
 
     local vs_fpm = -td_vs * M_2_FT * 60
-    local line = string.format("vs : %0.0f fpm, IAS: %0.0f kn", vs_fpm, ias)
+    local line = string.format("vs: %0.0f fpm, IAS: %0.0f kn, pitch: %.1f°", vs_fpm, ias, pitch)
 
-    if acf_model == "A320" or acf_model == "A321" or acf_model == "A319" then
+    if textual_rating and (acf_model == "A320" or acf_model == "A321" or acf_model == "A319") then
         local rating = get_a3xx_rating(vs_fpm)
         line = line .. "\n" .. rating
     end
@@ -107,6 +109,9 @@ local function display_data()
         elseif crab > 180 then
             crab = crab - 360
         end
+
+        -- make sure it never bombs
+        if thr_ra == nil then thr_ra = 0.0 end
 
         line = line ..
             string.format("\nThreshold %s/%s\nAbove: %.f ft / %.f m, Distance: %.f ft / %.f m\n" ..
@@ -157,6 +162,7 @@ local function loop()
             rw = nil
             rw_dist = 1.0E20
             thr_dist = 1.0E20
+            thr_crossed = false
             thr_ra = nil
         end
 
