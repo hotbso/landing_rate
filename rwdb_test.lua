@@ -30,11 +30,13 @@ function ipc.log(line)
 end
 
 rwdb = require("rwdb")
+local p3d_directory = "E:\\prepar3d\\p3dv5\\"
+rwdb.build_cache({p3d_directory .. "r5.csv", "r5_patch.csv"})
 
 -- rwdb.dump_cache()
 
 -- less than 0.001 cpu
-local rw, rw_dist = rwdb.nearest_rw(50.046735, 8.593897)
+local rw, rw_dist = rwdb.nearest_rw(43.616655,1.374523)
 
 print(string.format("%s %s %f %f %f", rw[rw_icao_], rw[rw_designator_], rw_dist, rw[rw_lat_], rw[rw_lon_]))
 

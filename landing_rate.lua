@@ -32,7 +32,7 @@ local textual_rating = true
 
 require("rwdb")
 
-local VERSION = "1.3"
+local VERSION = "1.4"
 
 local M_2_FT = 3.2808
 
@@ -187,6 +187,7 @@ local function loop()
     -- track crossing of threshold
     if not thr_crossed and rw ~= nil then
         local lat, lon = get_pos()
+        -- ipc.log(string.format("ra < 40 lat,lon %f,%f", lat, lon))
         local d = rwdb.thr_distance(rw, lat, lon)
 
         if d < thr_dist then

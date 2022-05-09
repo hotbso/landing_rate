@@ -196,9 +196,15 @@ local function nearest_rw_tile(lat, lon, lat_tile, lon_tile, min_rw, min_dist)
     for rw_key, rw in pairs(rw_list) do
         -- ipc.log(string.format("%s %f %f", rw_key, rw[rw_lat_], rw[rw_lon_]))
         local dist = geo_dist(lat, lon, rw[rw_lat_], rw[rw_lon_])
-        -- ipc.log(rw_key .. " " .. dist)
-        if dist < min_dist then
-            -- ipc.log(rw_key .. " " .. dist)
+
+        -- select only runways where the bearing to the thr matched the rwy hdg
+        -- otherwise you pick the wrong one with parallel rwys
+        local x, y = rwdb.mk_thr_vec(rw, lat, lon) -- threshold to pos
+        local bearing = math.fmod(90 - math.atan2(-y, -x) * 180 / math.pi + 360, 360) -- true bearing
+        --ipc.log(string.format("%s dist %0.2f bearing %.0f", rw_key, dist, bearing))
+
+        if dist < min_dist and math.abs(bearing - rw[rw_hdg_]) < 5 then
+            -- ipc.log(string.format("%s dist %0.2f bearing %.0f", rw_key, dist, bearing))
             min_dist = dist
             min_rw = rw
         end
