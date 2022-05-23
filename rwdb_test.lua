@@ -30,7 +30,8 @@ function ipc.log(line)
 end
 
 rwdb = require("rwdb")
-local p3d_directory = "E:\\prepar3d\\p3dv5\\"
+-- local p3d_directory = "E:\\prepar3d\\p3dv5\\"
+local p3d_directory = ".\\"
 rwdb.build_cache({p3d_directory .. "r5.csv", "r5_patch.csv"})
 
 -- rwdb.dump_cache()

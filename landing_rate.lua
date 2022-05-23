@@ -32,7 +32,7 @@ local textual_rating = true
 
 require("rwdb")
 
-local VERSION = "1.4"
+local VERSION = "1.5"
 
 local M_2_FT = 3.2808
 
@@ -47,11 +47,16 @@ local a3xx_ratings = {
     {100000, "Severe hard landing, damage likely"}
 }
 
-local acf_model, p3d_directory, script_directory
+local acf_model, r5csv_directory, script_directory
 
 local was_airborne = false
 
 local vs, rw, rw_dist, thr_dist, thr_crossed, thr_ra
+
+local sim_type = ipc.readUW(0x3308) -- 12 = p3d, 13 = msfs2020
+
+local window
+local window_close_time -- ms until close or nil
 
 local function get_pos()
     local lat = ipc.readDD(0x560) * 90.0 / (10001750.0 * 2^32)
@@ -89,7 +94,7 @@ local function display_data()
         line = line .. "\n" .. rating
     end
 
-    if rw ~=nil then
+    if rw ~= nil then
         local lat, lon = get_pos()
         ipc.log(string.format("td rw %s %s %f,%f", rw[rw_icao_], rw[rw_designator_], rw[rw_lat_], rw[rw_lon_]))
         ipc.log(string.format("td lat,lon %f,%f", lat, lon))
@@ -120,8 +125,23 @@ local function display_data()
                            d_crl * M_2_FT, d_crl, crab)
     end
 
-    ipc.setdisplay(30, 600, 600,  200)
-    ipc.display(line, show_time)
+    if sim_type == 13 then
+        -- msfs2020
+        if window == nil then
+            window = wnd.open("Landing Rate", 300, 700, 600, 120)
+            wnd.backcol(window, 0x000)
+            wnd.textcol(window, 0x6c0)
+            wnd.font(window, WND_ARIAL, -5)
+        end
+        wnd.show(window, WND_TOPMOST)
+
+        wnd.text(window, line)
+        window_close_time = show_time * 1000 + ipc.elapsedtime()
+    else
+        -- p3d
+        ipc.setdisplay(30, 600, 600,  200)
+        ipc.display(line, show_time)
+    end
 
     local pline = "\n--------------------------------------------------------------------\n" ..
                   line ..
@@ -131,6 +151,12 @@ end
 
 -- emulate continue via return
 local function loop()
+
+    if window_close_time ~= nil and window_close_time < ipc.elapsedtime() then
+        wnd.close(window)
+        window, window_close_time = nil, nil
+    end
+
     if ipc.readUW(0x0366) == 1 then  -- on ground flag
         if was_airborne then
             display_data()
@@ -214,14 +240,19 @@ ipc.setdisplay(30, 600, 600,  180)
 _, _, acf_model = string.find(ipc.readSTR(0x3500, 24), "([%a%d]+)")
 ipc.log("ACF model: '" .. acf_model .. "'")
 
-_, _, p3d_directory = string.find(ipc.readSTR(0x3E00, 256), "([%a%d%s:\\_%-]+)")
-ipc.log("p3d_directory: '" .. p3d_directory .. "'")
+if sim_type == 12 then  -- p3d
+    _, _, r5csv_directory = string.find(ipc.readSTR(0x3E00, 256), "([%a%d%s:\\_%-]+)")
+elseif sim_type == 13 then -- msfs 2020
+    r5csv_directory = ".\\"
+end
+
+ipc.log("r5csv_directory: '" .. r5csv_directory .. "'")
 
 script_directory = debug.getinfo(1, "S").source:sub(2)
 script_directory = script_directory:match("(.*[/\\])")
 ipc.log("script_directory: '" .. script_directory .. "'")
 
-rwdb.build_cache({p3d_directory .. "r5.csv", script_directory .. "r5_patch.csv"})
+rwdb.build_cache({r5csv_directory .. "r5.csv", script_directory .. "r5_patch.csv"})
 
 while true do
     loop()
